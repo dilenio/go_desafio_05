@@ -7,8 +7,8 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 type AddressResponse struct {
@@ -41,10 +41,31 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Get("/{cep}", handleGetTemperatureByCEP)
+	r.Route("/{cep}", func(r chi.Router) {
+		r.Use(checkCepMiddleware)
+		r.Get("/", handleGetTemperatureByCEP)
+	})
 
 	fmt.Println("Server running on port 8080")
 	http.ListenAndServe(":8080", r)
+}
+
+func checkCepMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cep := chi.URLParam(r, "cep")
+
+		if cep == "" || len(cep) == 0 {
+			http.Error(w, "CEP is required", http.StatusBadRequest)
+			return
+		}
+
+		if !isValidZipcode(cep) {
+			http.Error(w, "invalid zipcode", http.StatusUnprocessableEntity)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 func getAddressFromViaCEP(cep string) (*AddressResponse, error) {
@@ -105,10 +126,7 @@ func celsiusToKelvin(celsius float64) float64 {
 
 func handleGetTemperatureByCEP(w http.ResponseWriter, r *http.Request) {
 	cep := chi.URLParam(r, "cep")
-	if !isValidZipcode(cep) {
-		http.Error(w, "invalid zipcode", http.StatusUnprocessableEntity)
-		return
-	}
+
 	address, err := getAddressFromViaCEP(cep)
 	if err != nil {
 		http.Error(w, "can not find zipcode", http.StatusNotFound)

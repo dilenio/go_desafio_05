@@ -1,37 +1,100 @@
 package main
 
 import (
-	"net/http"
-	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestGetTemperatureByCEP(t *testing.T) {
-	// Cria um request de teste com um CEP válido
-	req, err := http.NewRequest("GET", "/45208643", nil)
-	if err != nil {
-		t.Fatal(err)
+func TestIsValidZipcode(t *testing.T) {
+	tests := []struct {
+		name     string
+		zipcode  string
+		expected bool
+	}{
+		{
+			name:     "valid zipcode",
+			zipcode:  "01001000",
+			expected: true,
+		},
+		{
+			name:     "invalid zipcode - letters",
+			zipcode:  "abc12345",
+			expected: false,
+		},
+		{
+			name:     "invalid zipcode - shorter length",
+			zipcode:  "12345",
+			expected: false,
+		},
 	}
 
-	// Cria um response recorder para gravar a resposta do handler
-	rr := httptest.NewRecorder()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isValidZipcode(tt.zipcode)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
 
-	// Cria um handler falso usando o roteador que você definiu
-	handler := http.HandlerFunc(handleGetTemperatureByCEP)
-
-	// Simula uma solicitação para a rota com o request de teste e o response recorder
-	handler.ServeHTTP(rr, req)
-
-	// Verifica o código de status da resposta
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			status, http.StatusOK)
+func TestCelsiusToFahrenheit(t *testing.T) {
+	tests := []struct {
+		name     string
+		celsius  float64
+		expected float64
+	}{
+		{
+			name:     "0°C to 32°F",
+			celsius:  0,
+			expected: 32,
+		},
+		{
+			name:     "100°C to 212°F",
+			celsius:  100,
+			expected: 212,
+		},
+		{
+			name:     "-50°C to -58°F",
+			celsius:  -50,
+			expected: -58,
+		},
 	}
 
-	// Verifica se o corpo da resposta contém os dados esperados
-	expected := `{"temp_C":28.5,"temp_F":83.3,"temp_K":301.5}`
-	if rr.Body.String() != expected {
-		t.Errorf("handler returned unexpected body: got %v want %v",
-			rr.Body.String(), expected)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := celsiusToFahrenheit(tt.celsius)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestCelsiusToKelvin(t *testing.T) {
+	tests := []struct {
+		name     string
+		celsius  float64
+		expected float64
+	}{
+		{
+			name:     "0°C to 273K",
+			celsius:  0,
+			expected: 273,
+		},
+		{
+			name:     "100°C to 373K",
+			celsius:  100,
+			expected: 373,
+		},
+		{
+			name:     "-273°C to 0K",
+			celsius:  -273,
+			expected: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := celsiusToKelvin(tt.celsius)
+			assert.Equal(t, tt.expected, result)
+		})
 	}
 }
