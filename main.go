@@ -12,12 +12,13 @@ import (
 )
 
 type AddressResponse struct {
-	CEP         string `json:"cep"`
-	Logradouro  string `json:"logradouro"`
-	Complemento string `json:"complemento"`
-	Bairro      string `json:"bairro"`
-	Localidade  string `json:"localidade"`
-	UF          string `json:"uf"`
+	CEP         string `json:"cep,omitempty"`
+	Logradouro  string `json:"logradouro,omitempty"`
+	Complemento string `json:"complemento,omitempty"`
+	Bairro      string `json:"bairro,omitempty"`
+	Localidade  string `json:"localidade,omitempty"`
+	UF          string `json:"uf,omitempty"`
+	Erro        bool   `json:"erro,omitempty"`
 }
 
 type WeatherResponse struct {
@@ -78,6 +79,9 @@ func getAddressFromViaCEP(cep string) (*AddressResponse, error) {
 
 	var address AddressResponse
 	err = json.NewDecoder(resp.Body).Decode(&address)
+	if address.Erro {
+		return nil, fmt.Errorf("zipcode not found")
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +102,7 @@ func getWeather(city string) (*WeatherResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(weather)
+
 	return &weather, nil
 }
 
