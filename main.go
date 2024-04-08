@@ -44,8 +44,7 @@ func main() {
 			defer wg.Done()
 			resp, err := http.Get(url)
 			if err != nil {
-				fmt.Println("Erro ao realizar request:", err)
-				return
+				panic(err)
 			}
 			defer resp.Body.Close()
 
@@ -65,10 +64,8 @@ func main() {
 	fmt.Printf("Requests Totais: %d\n", requests)
 
 	mutex.Lock()
-
 	for statusCode, count := range statusCodes {
 		fmt.Printf("Status %d: %d vezes\n", statusCode, count)
 	}
-
 	mutex.Unlock()
 }

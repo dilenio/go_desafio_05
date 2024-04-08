@@ -9,5 +9,5 @@ docker build -t loadtester .
 Para rodar a aplicação, use o comando abaixo:
 
 ```
-docker run loadtester --url=http://google.com --requests=1000 --concurrency=10
+docker run loadtester --url=https://google.com --requests=1000 --concurrency=10
 ```
