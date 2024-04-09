@@ -44,7 +44,11 @@ func main() {
 			defer wg.Done()
 			resp, err := http.Get(url)
 			if err != nil {
-				panic(err)
+				mutex.Lock()
+				statusCodes[400]++
+				mutex.Unlock()
+				<-semaphore
+				return
 			}
 			defer resp.Body.Close()
 
@@ -52,6 +56,7 @@ func main() {
 			statusCodes[resp.StatusCode]++
 			mutex.Unlock()
 
+			fmt.Print(".")
 			<-semaphore
 		}()
 	}
@@ -59,9 +64,11 @@ func main() {
 	wg.Wait()
 	totalTime := time.Since(start)
 
+	fmt.Println("")
 	fmt.Println("Relatório de Teste de Carga")
 	fmt.Printf("Tempo Total: %v\n", totalTime)
 	fmt.Printf("Requests Totais: %d\n", requests)
+	fmt.Printf("Concorrência: %d\n", concurrency)
 
 	mutex.Lock()
 	for statusCode, count := range statusCodes {
